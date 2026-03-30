@@ -11,7 +11,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import TIMESTAMPTZ, UUID
+from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -26,7 +26,7 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     telegram_id: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
     username: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[str] = mapped_column(TIMESTAMPTZ, server_default=func.now())
+    created_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     bills: Mapped[list["Bill"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
@@ -49,7 +49,7 @@ class Bill(Base):
         ARRAY(Integer), nullable=False, server_default="{7,3,1}"
     )
     enabled: Mapped[bool] = mapped_column(Boolean, server_default="true")
-    created_at: Mapped[str] = mapped_column(TIMESTAMPTZ, server_default=func.now())
+    created_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     user: Mapped["User"] = relationship(back_populates="bills")
     payments: Mapped[list["Payment"]] = relationship(
@@ -76,7 +76,7 @@ class Payment(Base):
     paid_date: Mapped[str | None] = mapped_column(Date, nullable=True)
     amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     status: Mapped[str] = mapped_column(Text, server_default="pending")  # pending | paid | missed
-    created_at: Mapped[str] = mapped_column(TIMESTAMPTZ, server_default=func.now())
+    created_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     bill: Mapped["Bill"] = relationship(back_populates="payments")
 
@@ -94,6 +94,6 @@ class ReminderLog(Base):
     due_date: Mapped[str] = mapped_column(Date, nullable=False)
     channel: Mapped[str] = mapped_column(Text, nullable=False)
     offset_days: Mapped[int] = mapped_column(Integer, nullable=False)
-    sent_at: Mapped[str] = mapped_column(TIMESTAMPTZ, server_default=func.now())
+    sent_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     bill: Mapped["Bill"] = relationship(back_populates="reminder_logs")
