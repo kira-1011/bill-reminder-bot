@@ -2,6 +2,8 @@
 
 import uuid
 
+import pytest
+
 from bot.services.bills import (
     add_bill,
     delete_bill,
@@ -14,6 +16,7 @@ from bot.services.bills import (
 from .helpers import make_session
 
 
+@pytest.mark.unit
 class TestUpsertUser:
     async def test_creates_new_user_when_not_found(self):
         session = make_session(scalar=None)
@@ -41,6 +44,7 @@ class TestUpsertUser:
         assert returned is user
 
 
+@pytest.mark.unit
 class TestGetUserByTelegramId:
     async def test_returns_none_when_not_found(self):
         session = make_session(scalar=None)
@@ -57,6 +61,7 @@ class TestGetUserByTelegramId:
         assert result is user
 
 
+@pytest.mark.unit
 class TestAddBill:
     async def test_creates_bill_with_correct_fields(self, user_id):
         session = make_session()
@@ -72,6 +77,7 @@ class TestAddBill:
         assert bill.user_id == user_id
 
 
+@pytest.mark.unit
 class TestListBills:
     async def test_returns_empty_list_when_no_bills(self, user_id):
         session = make_session(scalars=[])
@@ -95,6 +101,7 @@ class TestListBills:
         session.execute.assert_awaited_once()
 
 
+@pytest.mark.unit
 class TestGetBill:
     async def test_returns_none_when_not_found(self, user_id):
         session = make_session(scalar=None)
@@ -111,6 +118,7 @@ class TestGetBill:
         assert result is bill
 
 
+@pytest.mark.unit
 class TestDeleteBill:
     async def test_returns_false_when_bill_not_found(self, user_id):
         session = make_session(scalar=None)

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(uvx ruff:*)"
+      "Bash(uvx ruff:*)",
+      "Bash(uv add:*)"
     ]
   }
 }

@@ -2,11 +2,14 @@
 
 import uuid
 from datetime import date
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import ANY, AsyncMock, MagicMock
+
+import pytest
 
 from bot.notifier import _format_reminder, notify_user
 
 
+@pytest.mark.unit
 class TestFormatReminder:
     def test_overdue_message_contains_warning_and_paid_command(self):
         text = _format_reminder("Netflix", 9.99, "USD", date(2026, 3, 30), 0)
@@ -36,29 +39,33 @@ class TestFormatReminder:
         assert "7 days" in text
         assert "Netflix" in text
 
-    def test_amount_is_included_in_all_messages(self):
-        for days_left in [-1, 0, 1, 7]:
-            text = _format_reminder("Bill", 50.00, "EUR", date(2026, 4, 15), days_left)
-            assert "50.00 EUR" in text
+    @pytest.mark.parametrize("days_left", [-1, 0, 1, 7])
+    def test_amount_included_for_all_reminder_types(self, days_left):
+        text = _format_reminder("Bill", 50.00, "EUR", date(2026, 4, 15), days_left)
+
+        assert "50.00 EUR" in text
 
 
+@pytest.fixture
+def mock_user(user_id):
+    user = MagicMock()
+    user.id = user_id
+    user.telegram_id = 111_222_333
+    return user
+
+
+@pytest.mark.unit
 class TestNotifyUser:
-    def _make_user(self):
-        user = MagicMock()
-        user.id = uuid.uuid4()
-        user.telegram_id = 111_222_333
-        return user
-
-    async def test_no_due_bills_sends_nothing(self, monkeypatch):
+    async def test_no_due_bills_sends_nothing(self, mock_user, monkeypatch):
         monkeypatch.setattr("bot.notifier.get_due_bills", AsyncMock(return_value=[]))
         session = AsyncMock()
         channel = AsyncMock()
 
-        await notify_user(session, self._make_user(), channel)
+        await notify_user(session, mock_user, channel)
 
         channel.send_message.assert_not_called()
 
-    async def test_already_sent_skips_message_and_log(self, bill, monkeypatch):
+    async def test_already_sent_skips_message_and_log(self, bill, mock_user, monkeypatch):
         due_date = date(2026, 4, 15)
         monkeypatch.setattr(
             "bot.notifier.get_due_bills", AsyncMock(return_value=[(bill, due_date, 3)])
@@ -69,12 +76,12 @@ class TestNotifyUser:
         session = AsyncMock()
         channel = AsyncMock()
 
-        await notify_user(session, self._make_user(), channel)
+        await notify_user(session, mock_user, channel)
 
         channel.send_message.assert_not_called()
         mock_log.assert_not_called()
 
-    async def test_sends_message_and_logs_when_not_sent(self, bill, monkeypatch):
+    async def test_sends_message_and_logs_when_not_sent(self, bill, mock_user, monkeypatch):
         due_date = date(2026, 4, 15)
         monkeypatch.setattr(
             "bot.notifier.get_due_bills", AsyncMock(return_value=[(bill, due_date, 3)])
@@ -84,16 +91,13 @@ class TestNotifyUser:
         monkeypatch.setattr("bot.notifier.log_reminder", mock_log)
         session = AsyncMock()
         channel = AsyncMock()
-        user = self._make_user()
 
-        await notify_user(session, user, channel)
+        await notify_user(session, mock_user, channel)
 
-        from unittest.mock import ANY
-
-        channel.send_message.assert_awaited_once_with(user.telegram_id, ANY)
+        channel.send_message.assert_awaited_once_with(mock_user.telegram_id, ANY)
         mock_log.assert_awaited_once()
 
-    async def test_sends_message_to_correct_telegram_id(self, bill, monkeypatch):
+    async def test_sends_message_to_correct_telegram_id(self, bill, mock_user, monkeypatch):
         due_date = date(2026, 4, 15)
         monkeypatch.setattr(
             "bot.notifier.get_due_bills", AsyncMock(return_value=[(bill, due_date, 1)])
@@ -102,16 +106,13 @@ class TestNotifyUser:
         monkeypatch.setattr("bot.notifier.log_reminder", AsyncMock())
         session = AsyncMock()
         channel = AsyncMock()
-        user = self._make_user()
 
-        await notify_user(session, user, channel)
+        await notify_user(session, mock_user, channel)
 
         call_args = channel.send_message.call_args
-        assert call_args[0][0] == user.telegram_id
+        assert call_args[0][0] == mock_user.telegram_id
 
-    async def test_skips_individual_bill_if_already_sent_processes_others(
-        self, user_id, monkeypatch
-    ):
+    async def test_processes_remaining_bills_when_one_already_sent(self, user_id, monkeypatch):
         bill_a = MagicMock()
         bill_a.id = uuid.uuid4()
         bill_a.name = "A"
@@ -129,7 +130,7 @@ class TestNotifyUser:
             "bot.notifier.get_due_bills",
             AsyncMock(return_value=[(bill_a, due_date, 3), (bill_b, due_date, 3)]),
         )
-        # First call returns True (already sent), second returns False
+        # bill_a already sent, bill_b not
         monkeypatch.setattr(
             "bot.notifier.reminder_already_sent",
             AsyncMock(side_effect=[True, False]),

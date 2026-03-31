@@ -18,6 +18,7 @@ dev = [
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.1",
     "ruff>=0.11.2",
 ]
 
@@ -107,7 +108,20 @@ cmd = "docker compose run --rm bot uv run alembic upgrade head"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "--tb=short --cov=bot --cov-report=term-missing"
+addopts = "--tb=short --strict-markers --cov=bot --cov-report=term-missing --cov-fail-under=80"
+markers = [
+    "unit: fast, isolated unit tests (no I/O)",
+]
+
+[tool.coverage.run]
+omit = [
+    "src/bot/bot.py",
+    "src/bot/main.py",
+    "src/bot/scheduler.py",
+    "src/bot/handlers/*",
+    "src/bot/db/connection.py",
+    "src/bot/channels/telegram.py",
+]
 
 [tool.alembic]
 script_location = "migrations"

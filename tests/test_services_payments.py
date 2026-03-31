@@ -2,6 +2,8 @@
 
 from datetime import date
 
+import pytest
+
 from bot.services.payments import (
     get_due_bills,
     get_or_create_payment,
@@ -13,6 +15,7 @@ from bot.services.payments import (
 from .helpers import make_session
 
 
+@pytest.mark.unit
 class TestGetOrCreatePayment:
     async def test_returns_existing_payment(self, bill, payment):
         session = make_session(scalar=payment)
@@ -35,6 +38,7 @@ class TestGetOrCreatePayment:
         assert result.bill_id == bill.id
 
 
+@pytest.mark.unit
 class TestMarkPaid:
     async def test_sets_status_to_paid(self, bill, payment, monkeypatch):
         monkeypatch.setattr("bot.services.payments.today_local", lambda: date(2026, 4, 10))
@@ -63,6 +67,7 @@ class TestMarkPaid:
         assert result.amount == 9.99
 
 
+@pytest.mark.unit
 class TestReminderAlreadySent:
     async def test_returns_true_when_log_exists(self, bill):
         from bot.db.models import ReminderLog
@@ -87,6 +92,7 @@ class TestReminderAlreadySent:
         assert result is False
 
 
+@pytest.mark.unit
 class TestLogReminder:
     async def test_adds_reminder_log_to_session(self, bill):
         session = make_session()
@@ -101,6 +107,7 @@ class TestLogReminder:
         assert added.offset_days == 3
 
 
+@pytest.mark.unit
 class TestGetDueBills:
     async def test_includes_bill_when_days_left_in_reminder_days(self, bill, monkeypatch):
         # today=Apr 8, due_day=15 → due_date=Apr 15, days_left=7 → in [7,3,1]

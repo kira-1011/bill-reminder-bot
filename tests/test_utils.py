@@ -13,6 +13,7 @@ from bot.utils import (
 )
 
 
+@pytest.mark.unit
 class TestGetCycleKey:
     def test_formats_year_and_zero_padded_month(self):
         assert get_cycle_key(date(2026, 3, 31)) == "2026-03"
@@ -24,6 +25,7 @@ class TestGetCycleKey:
         assert get_cycle_key(date(2026, 12, 15)) == "2026-12"
 
 
+@pytest.mark.unit
 class TestComputeDueDate:
     def test_due_day_equals_today_returns_same_month(self):
         today = date(2026, 3, 15)
@@ -53,6 +55,7 @@ class TestComputeDueDate:
         assert result >= today
 
 
+@pytest.mark.unit
 class TestDaysUntil:
     def test_future_date(self):
         assert days_until(date(2026, 4, 10), date(2026, 4, 3)) == 7
@@ -64,6 +67,7 @@ class TestDaysUntil:
         assert days_until(date(2026, 4, 3), date(2026, 4, 10)) == -7
 
 
+@pytest.mark.unit
 class TestFormatAmount:
     def test_formats_with_two_decimal_places(self):
         assert format_amount(9.99, "USD") == "9.99 USD"
@@ -78,6 +82,7 @@ class TestFormatAmount:
         assert format_amount(9.99, "") == "9.99 "
 
 
+@pytest.mark.unit
 class TestFormatDueDate:
     def test_formats_day_month_year(self):
         assert format_due_date(date(2026, 3, 5)) == "05 Mar 2026"
