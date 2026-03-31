@@ -29,6 +29,9 @@ class User(Base):
     created_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     bills: Mapped[list["Bill"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    integrations: Mapped[list["Integration"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Bill(Base):
@@ -97,3 +100,20 @@ class ReminderLog(Base):
     sent_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     bill: Mapped["Bill"] = relationship(back_populates="reminder_logs")
+
+
+class Integration(Base):
+    __tablename__ = "integrations"
+    __table_args__ = (UniqueConstraint("user_id", "channel", name="uq_integrations_user_channel"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    channel: Mapped[str] = mapped_column(Text, nullable=False)
+    address: Mapped[str] = mapped_column(Text, nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, server_default="true")
+    created_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    user: Mapped["User"] = relationship(back_populates="integrations")

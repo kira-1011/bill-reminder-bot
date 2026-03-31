@@ -12,6 +12,7 @@ from bot.handlers.bills import (
 from bot.handlers.errors import error_handler
 from bot.handlers.history import history
 from bot.handlers.payments import build_paid_handler, paid_start
+from bot.handlers.settings import build_settings_handler
 from bot.handlers.start import start
 from bot.scheduler import register_scheduler
 
@@ -28,8 +29,9 @@ def build_application() -> Application:
     application.add_handler(CommandHandler("paid", paid_start))
     application.add_handler(CommandHandler("history", history))
 
-    # ConversationHandler for /addbill
+    # ConversationHandlers
     application.add_handler(build_addbill_handler())
+    application.add_handler(build_settings_handler())
 
     # Inline keyboard callbacks
     application.add_handler(build_delbill_handler())

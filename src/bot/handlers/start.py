@@ -22,6 +22,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/bills — list your bills\n"
         "/delbill — delete a bill\n"
         "/paid — mark a bill as paid\n"
-        "/history — payment history",
+        "/history — payment history\n"
+        "/settings — notification settings",
         parse_mode="HTML",
     )

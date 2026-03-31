@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     database_url: str
     bot_timezone: str = "Etc/GMT-3"
     log_level: str = "INFO"
+    resend_api_key: str = ""
+    resend_from_address: str = "reminders@bill-bot.example"
 
 
 def setup_logging(level: str) -> None:

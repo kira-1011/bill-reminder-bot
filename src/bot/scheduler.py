@@ -5,11 +5,13 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from telegram.ext import Application
 
+from bot.channels.email import EmailChannel
 from bot.channels.telegram import TelegramChannel
 from bot.config import settings
 from bot.db.connection import get_session
 from bot.db.models import User
-from bot.notifier import notify_user
+from bot.notifier import ChannelRoute, notify_user
+from bot.services.integrations import get_enabled_integrations
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +23,12 @@ class _UserRef:
 
 
 async def daily_check(context: object) -> None:
-    """Run once daily — send reminders for all users with bills due."""
+    """Run once daily — send reminders for all users via all enabled channels."""
     logger.info("Daily check started")
 
     bot = context.bot
-    channel = TelegramChannel(bot)
+    telegram_channel = TelegramChannel(bot)
+    email_channel = EmailChannel()
 
     async with get_session() as session:
         result = await session.execute(select(User.id, User.telegram_id))
@@ -34,11 +37,39 @@ async def daily_check(context: object) -> None:
     for user in users:
         try:
             async with get_session() as session:
-                await notify_user(session, user, channel)
+                integrations = await get_enabled_integrations(session, user.id)
+                routes = _build_routes(user, telegram_channel, email_channel, integrations)
+                await notify_user(session, user, routes)
         except Exception:
             logger.exception("Failed to notify user telegram_id=%s", user.telegram_id)
 
     logger.info("Daily check finished users=%d", len(users))
+
+
+def _build_routes(
+    user: _UserRef,
+    telegram_channel: TelegramChannel,
+    email_channel: EmailChannel,
+    integrations: list,
+) -> list[ChannelRoute]:
+    """Always include Telegram; append email route if the integration is enabled."""
+    routes: list[ChannelRoute] = [
+        ChannelRoute(
+            name="telegram",
+            channel=telegram_channel,
+            recipient=str(user.telegram_id),
+        )
+    ]
+    for integration in integrations:
+        if integration.channel == "email":
+            routes.append(
+                ChannelRoute(
+                    name="email",
+                    channel=email_channel,
+                    recipient=integration.address,
+                )
+            )
+    return routes
 
 
 def register_scheduler(application: Application) -> None:

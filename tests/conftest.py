@@ -9,6 +9,8 @@ from datetime import date
 # in place before pytest collects (imports) the test files.
 os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test-token")
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost/test")
+os.environ.setdefault("RESEND_API_KEY", "test-key")
+os.environ.setdefault("RESEND_FROM_ADDRESS", "test@example.com")
 
 import pytest
 

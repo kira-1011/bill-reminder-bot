@@ -10,6 +10,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "alembic>=1.18.4",
     "pydantic-settings[dotenv]>=2.13.1",
+    "resend>=2.26.0",
 ]
 
 [dependency-groups]
@@ -119,4 +120,5 @@ omit = [
     "src/bot/handlers/*",
     "src/bot/db/connection.py",
     "src/bot/channels/telegram.py",
+    "src/bot/channels/email.py",
 ]
