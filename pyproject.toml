@@ -14,6 +14,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "poethepoet>=0.42.1",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.11.2",
 ]
 
@@ -37,6 +41,73 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["bot"]
+
+# ── Code quality ──────────────────────────────────────────────────────────────
+[tool.poe.tasks.test]
+cmd = "pytest"
+help = "Run all tests with coverage"
+
+[tool.poe.tasks.test-fast]
+cmd = "pytest --no-cov -x"
+help = "Run tests without coverage, stop on first failure"
+
+[tool.poe.tasks.lint]
+cmd = "ruff check src tests"
+help = "Check code with ruff"
+
+[tool.poe.tasks.lint-fix]
+cmd = "ruff check --fix src tests"
+help = "Auto-fix ruff lint issues"
+
+[tool.poe.tasks.format]
+cmd = "ruff format src tests"
+help = "Format code with ruff"
+
+[tool.poe.tasks.format-check]
+cmd = "ruff format --check src tests"
+help = "Check formatting without modifying files"
+
+[tool.poe.tasks.check]
+sequence = ["lint", "format-check", "test"]
+help = "Run lint + format check + tests (CI equivalent)"
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+[tool.poe.tasks.build]
+cmd = "docker compose build"
+help = "Build the bot image"
+
+[tool.poe.tasks.up]
+cmd = "docker compose up -d"
+help = "Start all services in detached mode"
+
+[tool.poe.tasks.down]
+cmd = "docker compose down"
+help = "Stop all services"
+
+[tool.poe.tasks.logs]
+cmd = "docker compose logs -f bot"
+help = "Tail bot container logs"
+
+[tool.poe.tasks.migrate]
+cmd = "docker compose run --rm bot uv run alembic upgrade head"
+help = "Apply database migrations inside the container"
+
+[tool.poe.tasks.db-reset]
+help = "Tear down, restart postgres, and re-apply migrations"
+
+[[tool.poe.tasks.db-reset.sequence]]
+ref = "down"
+
+[[tool.poe.tasks.db-reset.sequence]]
+cmd = "docker compose up -d postgres"
+
+[[tool.poe.tasks.db-reset.sequence]]
+cmd = "docker compose run --rm bot uv run alembic upgrade head"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--tb=short --cov=bot --cov-report=term-missing"
 
 [tool.alembic]
 script_location = "migrations"
