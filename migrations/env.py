@@ -1,6 +1,4 @@
 import asyncio
-import os
-from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import pool
@@ -13,12 +11,8 @@ from bot.db.models import Base
 # Alembic Config object
 config = context.config
 
-# Set DB URL from application settings — overrides anything in alembic.ini / pyproject.toml
+# Set DB URL from application settings — overrides the placeholder in alembic.ini
 config.set_main_option("sqlalchemy.url", settings.database_url)
-
-# Set up logging only if a config file (alembic.ini) is present
-if config.config_file_name is not None and os.path.exists(config.config_file_name):
-    fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 

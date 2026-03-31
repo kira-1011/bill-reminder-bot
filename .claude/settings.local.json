@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(uvx ruff:*)",
-      "Bash(uv add:*)"
+      "Bash(uv add:*)",
+      "Bash(docker compose:*)"
     ]
   }
 }

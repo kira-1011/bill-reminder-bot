@@ -93,17 +93,15 @@ help = "Tail bot container logs"
 cmd = "docker compose run --rm bot uv run alembic upgrade head"
 help = "Apply database migrations inside the container"
 
-[tool.poe.tasks.db-reset]
-help = "Tear down, restart postgres, and re-apply migrations"
-
-[[tool.poe.tasks.db-reset.sequence]]
-ref = "down"
-
-[[tool.poe.tasks.db-reset.sequence]]
+[tool.poe.tasks._pg-start]
 cmd = "docker compose up -d postgres"
 
-[[tool.poe.tasks.db-reset.sequence]]
+[tool.poe.tasks._pg-migrate]
 cmd = "docker compose run --rm bot uv run alembic upgrade head"
+
+[tool.poe.tasks.db-reset]
+sequence = ["down", "_pg-start", "_pg-migrate"]
+help = "Tear down, restart postgres, and re-apply migrations"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -122,20 +120,3 @@ omit = [
     "src/bot/db/connection.py",
     "src/bot/channels/telegram.py",
 ]
-
-[tool.alembic]
-script_location = "migrations"
-file_template = "%%(year)d%%(month).2d%%(day).2d_%%(slug)s"
-prepend_sys_path = ["."]
-
-[[tool.alembic.post_write_hooks]]
-name = "ruff_check"
-type = "module"
-module = "ruff"
-options = "check --fix REVISION_SCRIPT_FILENAME"
-
-[[tool.alembic.post_write_hooks]]
-name = "ruff_format"
-type = "module"
-module = "ruff"
-options = "format REVISION_SCRIPT_FILENAME"
