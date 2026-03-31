@@ -1,7 +1,14 @@
 """Shared pytest fixtures."""
 
+import os
 import uuid
 from datetime import date
+
+# Set required env vars before any bot modules are imported.
+# bot.config.Settings() is instantiated at module level, so these must be
+# in place before pytest collects (imports) the test files.
+os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test-token")
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost/test")
 
 import pytest
 
